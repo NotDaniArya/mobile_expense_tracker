@@ -2,19 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/native.dart';
 import 'package:expense_tracker/core/database/database.dart';
 import 'package:expense_tracker/features/expense/data/expense_repository.dart';
-import 'package:expense_tracker/features/budget_group/data/budget_repository.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late AppDatabase db;
   late ExpenseRepository expenseRepo;
-  late BudgetRepository budgetRepo;
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     expenseRepo = ExpenseRepository(db);
-    budgetRepo = BudgetRepository(db);
   });
 
   tearDown(() async {
