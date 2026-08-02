@@ -40,8 +40,30 @@ class ExpenseRepository {
         );
   }
 
-  Future<void> deleteExpense(int id) {
-    return (_db.delete(_db.expenses)..where((t) => t.id.equals(id))).go();
+  Future<bool> updateExpense({
+    required int id,
+    required int categoryId,
+    required double amount,
+    required DateTime date,
+    String? notes,
+    String? location,
+  }) {
+    return (_db.update(_db.expenses)..where((t) => t.id.equals(id)))
+        .write(
+          ExpensesCompanion(
+            categoryId: Value(categoryId),
+            amount: Value(amount),
+            date: Value(date),
+            notes: Value(notes),
+            location: Value(location),
+          ),
+        )
+        .then((rows) => rows > 0);
+  }
+
+  Future<void> deleteExpense(int id) async {
+    await (_db.delete(_db.expenses)..where((t) => t.id.equals(id))).go();
+    await (_db.delete(_db.budgetTransfers)..where((t) => t.reason.like('%[ExpID: $id]%'))).go();
   }
 
   Stream<List<QuickPreset>> watchQuickPresets() {

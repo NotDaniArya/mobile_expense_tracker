@@ -452,6 +452,145 @@ class DashboardScreen extends ConsumerWidget {
                   );
                 },
               ),
+
+              // TRANSACTION HISTORY (EDIT & DELETE CAPABLE LIST)
+              expensesAsync.when(
+                loading: () => const Center(child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: CircularProgressIndicator(),
+                )),
+                error: (err, stack) => Center(child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text('Error: $err'),
+                )),
+                data: (expenses) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                        child: Text(
+                          'Riwayat Transaksi',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                      if (expenses.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 36),
+                          child: Center(
+                            child: Text(
+                              'Belum ada transaksi bulan ini.',
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: expenses.length,
+                          itemBuilder: (context, index) {
+                            final exp = expenses[index];
+                            final formattedDate = DateFormat('dd MMM yyyy').format(exp.date);
+                            
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardTheme.color,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                title: Text(
+                                  exp.notes ?? 'Pengeluaran Tanpa Catatan',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(
+                                  '$formattedDate • ${exp.location ?? "Tanpa Lokasi"}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      currencyFormatter.format(exp.amount),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                    PopupMenuButton<String>(
+                                      icon: const Icon(Icons.more_vert, size: 20),
+                                      onSelected: (action) async {
+                                        if (action == 'edit') {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AddExpenseDialog(expenseToEdit: exp),
+                                          );
+                                        } else if (action == 'delete') {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text('Hapus Pengeluaran?'),
+                                              content: const Text('Apakah Anda yakin ingin menghapus catatan pengeluaran ini?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context, false),
+                                                  child: const Text('Batal'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context, true),
+                                                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                                  child: const Text('Hapus'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            await ref.read(expenseRepositoryProvider).deleteExpense(exp.id);
+                                          }
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.edit, size: 18),
+                                              SizedBox(width: 8),
+                                              Text('Edit'),
+                                            ],
+                                          ),
+                                        ),
+                                        const PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.delete, size: 18, color: Colors.red),
+                                              SizedBox(width: 8),
+                                              Text('Hapus', style: TextStyle(color: Colors.red)),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),
