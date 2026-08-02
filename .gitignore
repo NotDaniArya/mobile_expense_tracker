@@ -46,3 +46,4 @@ app.*.map.json
 
 # Sensitive environment files
 .env
+issue.md
