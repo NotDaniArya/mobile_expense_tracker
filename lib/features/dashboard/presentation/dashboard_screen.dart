@@ -16,7 +16,6 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedMonth = ref.watch(selectedMonthProvider);
     final statsAsync = ref.watch(budgetGroupsWithStatsProvider(selectedMonth));
-    final dailyAllowance = ref.watch(dailyAllowanceProvider(DateTime.now()));
     final presetsAsync = ref.watch(quickPresetsProvider);
     final expensesAsync = ref.watch(expensesForMonthProvider(selectedMonth));
 
@@ -166,57 +165,7 @@ class DashboardScreen extends ConsumerWidget {
                 },
               ),
 
-              // DAILY ALLOWANCE CARD
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardTheme.color,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Theme.of(context).cardTheme.shape is RoundedRectangleBorder
-                      ? Border.fromBorderSide((Theme.of(context).cardTheme.shape as RoundedRectangleBorder).side)
-                      : null,
-                ),
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.flash_on, color: Theme.of(context).colorScheme.secondary),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'JATAH MAKAN HARI INI',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            currencyFormatter.format(dailyAllowance),
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      'Target: 40k/hari',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ANALYTICS GRAPH
+               // ANALYTICS GRAPH
               expensesAsync.when(
                 loading: () => const SizedBox(),
                 error: (err, stack) => const SizedBox(),

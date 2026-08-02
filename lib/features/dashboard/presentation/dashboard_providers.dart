@@ -149,42 +149,6 @@ final budgetGroupsWithStatsProvider = Provider.family<AsyncValue<List<CategoryGr
   return AsyncValue.data(result);
 });
 
-final dailyAllowanceProvider = Provider.family<double, DateTime>((ref, date) {
-  final statsAsync = ref.watch(budgetGroupsWithStatsProvider(date));
-  return statsAsync.maybeWhen(
-    data: (groups) {
-      CategoryWithStats? makanHarian;
-      for (var group in groups) {
-        for (var cat in group.categories) {
-          if (cat.category.id == 6) {
-            makanHarian = cat;
-            break;
-          }
-        }
-      }
-      
-      if (makanHarian == null) return 0.0;
-      
-      final lastDayOfMonth = DateTime(date.year, date.month + 1, 0).day;
-      final today = DateTime.now();
-      
-      int remainingDays;
-      if (date.year == today.year && date.month == today.month) {
-        remainingDays = lastDayOfMonth - today.day + 1;
-      } else if (date.isBefore(DateTime(today.year, today.month, 1))) {
-        remainingDays = 0; // Past month
-      } else {
-        remainingDays = lastDayOfMonth; // Future month
-      }
-      
-      if (remainingDays <= 0) return 0.0;
-      final allowance = makanHarian.remaining / remainingDays;
-      return allowance < 0 ? 0.0 : allowance;
-    },
-    orElse: () => 0.0,
-  );
-});
-
 final quickPresetsProvider = StreamProvider<List<QuickPreset>>((ref) {
   return ref.watch(expenseRepositoryProvider).watchQuickPresets();
 });
