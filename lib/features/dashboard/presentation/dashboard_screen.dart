@@ -74,7 +74,8 @@ class DashboardScreen extends ConsumerWidget {
                   final totalBudget = groups.fold<double>(0, (sum, g) => sum + g.totalNetBudget);
                   final totalSpent = groups.fold<double>(0, (sum, g) => sum + g.totalSpent);
                   final totalRemaining = totalBudget - totalSpent;
-                  final spentPercent = totalBudget > 0 ? (totalSpent / totalBudget) : 0.0;
+                  final ratio = totalBudget > 0 ? (totalSpent / totalBudget) : (totalSpent > 0 ? 1.0 : 0.0);
+                  final spentPercent = ratio.isNaN || ratio.isInfinite ? 1.0 : ratio.clamp(0.0, 1.0);
 
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -105,29 +106,50 @@ class DashboardScreen extends ConsumerWidget {
                           style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          currencyFormatter.format(totalBudget),
-                          style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            currencyFormatter.format(totalBudget),
+                            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Terpakai', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                Text(currencyFormatter.format(totalSpent),
-                                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                              ],
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Terpakai', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      currencyFormatter.format(totalSpent),
+                                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Text('Sisa Budget', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                Text(currencyFormatter.format(totalRemaining),
-                                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                              ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text('Sisa Budget', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      currencyFormatter.format(totalRemaining),
+                                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -349,7 +371,8 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                           ),
                           ...group.categories.map((cat) {
-                            final progress = cat.netBudget > 0 ? (cat.spent / cat.netBudget) : 0.0;
+                            final ratio = cat.netBudget > 0 ? (cat.spent / cat.netBudget) : (cat.spent > 0 ? 1.0 : 0.0);
+                            final progress = ratio.isNaN || ratio.isInfinite ? 1.0 : ratio.clamp(0.0, 1.0);
                             Color statusColor = Colors.green;
                             if (cat.status == 'HABIS' || cat.status == 'OVERBUDGET') {
                               statusColor = Colors.red;

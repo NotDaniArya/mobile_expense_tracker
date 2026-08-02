@@ -14,10 +14,10 @@ class ExpenseRepository {
 
   Stream<List<Expense>> watchExpensesForMonth(DateTime month) {
     final startOfMonth = DateTime(month.year, month.month, 1);
-    final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+    final startOfNextMonth = DateTime(month.year, month.month + 1, 1);
 
     return (_db.select(_db.expenses)
-          ..where((t) => t.date.isBetweenValues(startOfMonth, endOfMonth))
+          ..where((t) => t.date.isBiggerOrEqualValue(startOfMonth) & t.date.isSmallerThanValue(startOfNextMonth))
           ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]))
         .watch();
   }
