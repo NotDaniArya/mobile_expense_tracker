@@ -380,6 +380,8 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                     // CATATAN (NOTES)
                     TextFormField(
                       controller: _notesController,
+                      maxLength: 100,
+                      maxLines: 2,
                       decoration: InputDecoration(
                         labelText: 'Catatan / Deskripsi',
                         filled: true,

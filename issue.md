@@ -1,67 +1,63 @@
-# [PLAN] High-Level Specification, QA Audit & Remediation Plan: Personal Expense Tracker App
+# [PLAN] High-Level Specification, QA Extreme Stress Audit & Remediation Plan
 
 ## 📌 Context & Problem Statement
-Aplikasi Personal Expense Tracker berbasis **Flutter** (Clean Architecture, Drift DB, Riverpod, Google ML Kit & Gemini AI) telah berhasil dijalankan dan diuji secara menyeluruh di emulator **Pixel 9 Pro (Android 16 API 36 / `emulator-5554`)**.
-
-Pengujian dilakukan menggunakan dua skenario:
-1. **Happy Path (Data Benar)**: CRUD pengeluaran, One-Tap Quick Log, perhitungan Jatah Harian, visualisasi grafik `fl_chart`, scan struk OCR/AI, serta saran AI Advisor.
-2. **Negative Testing (Data Salah & Edge Cases)**: Menguji ketahanan aplikasi terhadap input tidak valid, alokasi budget berlebih, kegagalan scan struk, dan perhitungan batas tanggal.
+Pengujian beban ekstrem (**Extreme Data & Error Stress Testing**) telah dilakukan pada aplikasi Personal Expense Tracker di emulator **Pixel 9 Pro**. Pengujian ini memfokuskan pada respon sistem terhadap input batas atas/ekstrem, karakter khusus/newline injection, pembagian nol (*division by zero*), penanganan error jaringan/API Key, dan skenario *outlier* grafik.
 
 ---
 
-## 🔍 Audit Kelemahan Aplikasi & Analisis Penyebab (Root Cause Analysis)
+## 🔍 Hasil Stress Audit Data Ekstrem & Analisis Penyebab (Root Cause Analysis)
 
-Berdasarkan hasil pengujian empiris, ditemukan **5 Kelemahan / Defect** pada aplikasi saat ini:
+Ditemukan **5 Cacat Celah Beban Ekstrem (Extreme Data Defects)** pada aplikasi:
 
-### ❌ Kelemahan 1: Input Nominal Negatif / Nol Lolos Validasi Form
-- **Gejala (Symptom)**: Pengguna dapat menginput nominal negatif (misal `-50.000`) atau `0` pada dialog pencatatan pengeluaran. Nominal negatif justru **menambah** sisa budget alih-alih menguranginya.
-- **Penyebab (Root Cause)**: Fungsi `validator` pada `_amountController` di `add_expense_dialog.dart` hanya mengecek `val.isEmpty` dan `double.tryParse(val) == null`, tetapi **belum mengecek kondisi `amount <= 0`**.
+### ❌ Extreme Defect 1: UI Overflow / Distortion pada Input Nominal Triliunan (Large Nominal)
+- **Gejala (Symptom)**: Saat pengguna memasukkan angka bernilai triliunan (misal Rp 999.999.999.999), tampilan text pada kartu kategori dashboard dan dialog overbudget mengalami **RenderFlex overflowed by XXX pixels** (garis kuning-hitam pada layar).
+- **Penyebab (Root Cause)**: Widget `Text` yang menampilkan teks mata uang `currencyFormatter.format(amount)` tidak dibungkus dengan `FittedBox`, `maxLines: 1`, atau `TextOverflow.ellipsis`, dan belum mendukung format ringkas (misal `999.9 M` atau `1.0 T`).
 
-### ❌ Kelemahan 2: Kategori Sumber Cover Budget Bisa Menjadi Minus (Budget Exhaustion)
-- **Gejala (Symptom)**: Ketika terjadi overbudget (misal kekurangan Rp 40.000), pengguna dapat memilih kategori sumber (misal *Dana Darurat*) yang sisa budget-nya hanya Rp 10.000. Akibatnya, budget *Dana Darurat* menjadi minus (-Rp 30.000).
-- **Penyebab (Root Cause)**: Dropdown kategori sumber di `add_expense_dialog.dart` menampilkan semua kategori yang memiliki `remaining > 0`, tanpa memfilter kategori yang memiliki sisa budget cukup (`remaining >= _reallocationAmount`).
+### ❌ Extreme Defect 2: Injeksi Newline Beruntun & Teks Panjang pada Kolom Catatan (Notes Injection)
+- **Gejala (Symptom)**: Memasukkan 20+ karakter *newline* (`\n\n\n...`) atau teks deskripsi yang sangat panjang pada kolom `notes` menyebabkan kartu item transaksi membentang secara vertikal menutupi seluruh layar.
+- **Penyebab (Root Cause)**: `TextFormField` catatan pada `add_expense_dialog.dart` belum membatasi `maxLength` (misal 100 karakter) dan `maxLines`, serta tampilan item daftar transaksi belum menggunakan `maxLines: 1, overflow: TextOverflow.ellipsis`.
 
-### ❌ Kelemahan 3: Hardcoded Value Rp 15.000 Saat Scan Struk Buram / Gagal OCR
-- **Gejala (Symptom)**: Jika pengguna mengambil foto struk yang sangat buram atau tanpa angka, sistem fallback OCR lokal otomatis menetapkan nominal **Rp 15.000** tanpa memberi tahu pengguna bahwa ekstraksi angka gagal.
-- **Penyebab (Root Cause)**: Fungsi `_parseOcrLocally` pada `scanner_screen.dart` secara otomatis menetapkan `extractedAmount = maxVal > 0 ? maxVal : 15000.0`.
+### ❌ Extreme Defect 3: Mis-Kalkulasi Progress Bar pada Net Budget 0 (Division by Zero / NaN)
+- **Gejala (Symptom)**: Jika suatu kategori memiliki budget nol (`netBudget == 0.0`) dan dilakukan pengeluaran, kalkulasi rasio progress `spent / netBudget` menghasilkan nilai `NaN` atau `0.0`. Tampilan progress bar menunjukkan 0% padahal pengeluaran sudah terlampaui (overbudget 100%).
+- **Penyebab (Root Cause)**: Perhitungan persentase progress di `dashboard_screen.dart` belum memeriksa kondisi `netBudget == 0` dan belum melakukan `.clamp(0.0, 1.0)`.
 
-### ❌ Kelemahan 4: Potensi Transaksi Terlewat Pada Batas Milidetik Akhir Bulan
-- **Gejala (Symptom)**: Transaksi yang dicatat pada detik terakhir bulan (misal tanggal 31 jam 23:59:59.900) berpotensi tidak terbaca pada query filter bulanan.
-- **Penyebab (Root Cause)**: Penentuan `endOfMonth` pada `expense_repository.dart` dan `budget_repository.dart` menggunakan `DateTime(year, month + 1, 0, 23, 59, 59)` yang memiliki presisi detik murni, sehingga mengabaikan fraksi milidetik (`.900ms`).
+### ❌ Extreme Defect 4: Tampilan Raw Technical Stack Trace saat Koneksi Terputus / API Key Tidak Valid
+- **Gejala (Symptom)**: Ketika koneksi internet terputus atau API Key Gemini tidak valid, layar `AiAdvisorScreen` menampilkan teks error teknis internal Dart (seperti `[google_generative_ai/api-key-invalid] ...`) tanpa pesan yang ramah pengguna (*user-friendly error UI*) dan tanpa tombol coba lagi (*retry button*).
+- **Penyebab (Root Cause)**: Fungsi `_fetchAiAdvice()` di `ai_advisor_screen.dart` langsung menetapkan `e.toString()` ke state error UI tanpa mem-parsing tipe eksepsi.
 
-### ❌ Kelemahan 5: Kalkulator Jatah Harian Mis-Kalkulasi Pada Bulan Lalu / Masa Depan
-- **Gejala (Symptom)**: Saat pengguna melihat dashboard bulan lalu (misal bulan Mei saat posisi hari ini di bulan Agustus), *Jatah Makan Hari Ini* dihitung menggunakan tanggal hari ini (tanggal 2), sehingga membagi sisa budget Mei dengan sisa hari bulan Agustus.
-- **Penyebab (Root Cause)**: Provider `dailyAllowanceProvider` pada `dashboard_providers.dart` mengasumsikan `date` selalu bulan berjalan tanpa memeriksa apakah `selectedMonth` sama dengan bulan aktif saat ini.
+### ❌ Extreme Defect 5: Distorsi & Tumpang Tindih Sumbu Y Grafik pada Data Outlier Ekstrem
+- **Gejala (Symptom)**: Jika terdapat 1 transaksi bernilai Rp 50.000.000 sedangkan transaksi lainnya Rp 10.000, grafik `fl_chart` memanjangkan Y-axis secara ekstrem sehingga batang transaksi kecil tampak 0px dan label sumbu Y tumpang tindih.
+- **Penyebab (Root Cause)**: `BarChartData` di `dashboard_screen.dart` belum menentukan batasan interval Y-axis (`reservedSize` & `interval`) secara terstruktur untuk mengantisipasi selisih nilai ekstrem.
 
 ---
 
-## 🛠️ Rencana Perbaikan (Remediation Plan for Junior Dev / AI)
+## 🛠️ Rencana Perbaikan (Remediation Plan for Extreme Data Issues)
 
 > [!IMPORTANT]
-> **Petunjuk**: Jangan langsung mengubah kode aplikasi saat ini. Ikuti langkah-langkah perbaikan secara bertahap berikut:
+> **Petunjuk**: Jangan langsung mengubah kode aplikasi saat ini. Ikuti langkah-langkah perbaikan bertahap berikut:
 
-### Phase 1: Perbaikan Validasi Form & Budget Cover (Priority: High)
-1. **Fix Validator Nominal**:
-   - Edit `add_expense_dialog.dart`. Tambahkan validasi `if (amount <= 0) return 'Nominal harus lebih besar dari 0';`.
-2. **Fix Filter Kategori Sumber Cover Budget**:
-   - Filter daftar `sourceCategories` agar hanya menampilkan kategori yang memiliki `remaining >= _reallocationAmount`.
-   - Tambahkan pesan peringatan jika tidak ada kategori yang memiliki sisa budget cukup untuk menutupi overbudget.
+### Phase 1: Penanganan UI Robustness & Input Boundaries (Priority: High)
+1. **Fix Large Nominal UI Formatting**:
+   - Pembungkus teks nominal di `dashboard_screen.dart` dengan `FittedBox` atau `TextOverflow.ellipsis`.
+   - Buat fungsi pembantu format mata uang ringkas (`compactCurrencyFormatter`) untuk angka di atas 100 Juta (misal `150 Jt`, `1.2 M`).
+2. **Fix Notes Length & Newline Sanitization**:
+   - Tambahkan `maxLength: 100` dan `maxLines: 2` pada `TextFormField` catatan di `add_expense_dialog.dart`.
+   - Bersihkan karakter `\n` menjadi spasi tunggal saat menampilkan catatan di tile daftar transaksi.
 
-### Phase 2: Perbaikan OCR Scanner Fallback (Priority: Medium)
-1. **Fix Fallback Scanner**:
-   - Edit `scanner_screen.dart`. Jika OCR tidak menemukan angka nominal yang valid (`maxVal == 0`), tampilkan dialog peringatan *"Nominal tidak terdeteksi pada struk, silakan isi manual"* alih-alih menetapkan nilai default Rp 15.000.
+### Phase 2: Perbaikan Formula Progress & Error UI (Priority: Medium)
+1. **Fix Zero Budget Progress Ratio**:
+   - Di `dashboard_screen.dart`, jika `netBudget <= 0`, set progress ratio ke `1.0` jika `spent > 0`, atau `0.0` jika `spent == 0`. Selalu gunakan `.clamp(0.0, 1.0)`.
+2. **Fix User-Friendly AI Error State**:
+   - Edit `ai_advisor_screen.dart`. Tangkap eksepsi spesifik dan tampilkan kartu error ramah pengguna dengan tombol *"Coba Lagi"* (*Retry Button*).
 
-### Phase 3: Perbaikan Query Rentang Tanggal & Daily Allowance (Priority: Medium)
-1. **Fix Date Range Query**:
-   - Ubah logika query rentang tanggal di `expense_repository.dart` dan `budget_repository.dart` dari `isBetweenValues(start, end)` menjadi query eksklusif batas atas: `< DateTime(month.year, month.month + 1, 1)`.
-2. **Fix Daily Allowance Logic**:
-   - Edit `dailyAllowanceProvider` di `dashboard_providers.dart`. Tambahkan pengecekan: Jika `selectedMonth.month != DateTime.now().month`, kembalikan `0.0` atau tampilkan status *"Bulan Lalu / Masa Depan"*.
+### Phase 3: Perbaikan Skala Grafik Outlier (Priority: Low)
+1. **Fix Chart Y-Axis Interval**:
+   - Hitung `maxY` dan `interval` secara teratur pada `BarChartData` untuk memastikan label sumbu Y tidak bertumpuk ketika ada nilai outlier.
 
 ---
 
-## 📋 Checklist Verifikasi Perbaikan Selanjutnya
-- [ ] Test input nominal `-100` ➔ Harus ditolak oleh form validator.
-- [ ] Test overbudget Rp 50k dengan kategori sumber sisa Rp 20k ➔ Harus ditolak/diperingatkan.
-- [ ] Test scan foto polos/tanpa teks ➔ Harus memunculkan prompt input manual.
-- [ ] Test transaksi jam 23:59:59.999 ➔ Harus tetap masuk ke statistik bulan tersebut.
-- [ ] Navigasi ke bulan lalu ➔ Jatah harian tidak lagi menghitung tanggal bulan berjalan.
+## 📋 Checklist Verifikasi Beban Ekstrem Selanjutnya
+- [ ] Input nominal Rp 999.999.999.999 ➔ Tidak ada overflow layout pada dashboard.
+- [ ] Input catatan 20 newline ➔ Teks dibersihkan & dipotong rapi dengan ellipsis.
+- [ ] Pengeluaran pada kategori budget Rp 0 ➔ Progress bar menunjukkan status penuh/overbudget 100%.
+- [ ] Simulasi luring pada AI Advisor ➔ Tampil error UI ramah pengguna + tombol retry.

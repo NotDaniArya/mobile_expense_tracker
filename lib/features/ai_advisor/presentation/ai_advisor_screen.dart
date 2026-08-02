@@ -14,6 +14,7 @@ class AiAdvisorScreen extends ConsumerStatefulWidget {
 class _AiAdvisorScreenState extends ConsumerState<AiAdvisorScreen> {
   bool _isLoading = false;
   String _adviceMarkdown = '';
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _AiAdvisorScreenState extends ConsumerState<AiAdvisorScreen> {
     setState(() {
       _isLoading = true;
       _adviceMarkdown = '';
+      _errorMessage = null;
     });
 
     try {
@@ -76,7 +78,7 @@ class _AiAdvisorScreenState extends ConsumerState<AiAdvisorScreen> {
       });
     } catch (e) {
       setState(() {
-        _adviceMarkdown = 'Gagal memuat saran keuangan. Pastikan koneksi internet aktif dan API Key valid.\nError: $e';
+        _errorMessage = 'Gagal memuat saran keuangan. Pastikan koneksi internet Anda aktif dan API Key valid.';
         _isLoading = false;
       });
     }
@@ -115,26 +117,54 @@ class _AiAdvisorScreenState extends ConsumerState<AiAdvisorScreen> {
                     ],
                   ),
                 )
-              : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              : _errorMessage != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.psychology, size: 36, color: Theme.of(context).colorScheme.primary),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Saran Keuangan Cerdas',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          Icon(Icons.wifi_off_rounded, size: 64, color: Theme.of(context).colorScheme.error),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: _fetchAiAdvice,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Coba Lagi'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
                           ),
                         ],
                       ),
-                      const Divider(height: 32),
-                      // Premium custom parsing for markdown to simple widgets
-                      _buildMarkdownBody(_adviceMarkdown),
-                    ],
-                  ),
-                ),
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.psychology, size: 36, color: Theme.of(context).colorScheme.primary),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Saran Keuangan Cerdas',
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 32),
+                          // Premium custom parsing for markdown to simple widgets
+                          _buildMarkdownBody(_adviceMarkdown),
+                        ],
+                      ),
+                    ),
         ),
       ),
     );
