@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
-import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'features/dashboard/presentation/navigation_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system, // Supports automatic Dark / Light mode based on system settings
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      home: const DashboardScreen(),
+      home: const MainNavigationShell(),
     );
   }
 }
