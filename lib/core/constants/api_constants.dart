@@ -1,6 +1,5 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiConstants {
-  static const String geminiApiKey = String.fromEnvironment(
-    'GEMINI_API_KEY',
-    defaultValue: 'YOUR_API_KEY_HERE',
-  );
+  static final String geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
 }
