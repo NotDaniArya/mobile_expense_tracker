@@ -143,7 +143,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         maxVal = val;
       }
     }
-    extractedAmount = maxVal > 0 ? maxVal : 15000.0;
+    extractedAmount = maxVal > 0 ? maxVal : 0.0;
 
     // Simple keyword categorization
     final lowerText = text.toLowerCase();
@@ -224,7 +224,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Nominal: Rp ${amount.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              amount == 0.0
+                  ? const Text(
+                      'Nominal: Gagal Terdeteksi (Silakan isi manual)',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                    )
+                  : Text('Nominal: Rp ${amount.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text('Kategori: $categoryName'),
               const SizedBox(height: 8),

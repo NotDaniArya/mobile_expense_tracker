@@ -22,10 +22,10 @@ class BudgetRepository {
 
   Stream<List<BudgetTransfer>> watchBudgetTransfersForMonth(DateTime month) {
     final startOfMonth = DateTime(month.year, month.month, 1);
-    final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+    final startOfNextMonth = DateTime(month.year, month.month + 1, 1);
 
     return (_db.select(_db.budgetTransfers)
-          ..where((t) => t.date.isBetweenValues(startOfMonth, endOfMonth)))
+          ..where((t) => t.date.isBiggerOrEqualValue(startOfMonth) & t.date.isSmallerThanValue(startOfNextMonth)))
         .watch();
   }
 

@@ -166,8 +166,16 @@ final dailyAllowanceProvider = Provider.family<double, DateTime>((ref, date) {
       if (makanHarian == null) return 0.0;
       
       final lastDayOfMonth = DateTime(date.year, date.month + 1, 0).day;
-      final currentDay = date.day;
-      final remainingDays = lastDayOfMonth - currentDay + 1;
+      final today = DateTime.now();
+      
+      int remainingDays;
+      if (date.year == today.year && date.month == today.month) {
+        remainingDays = lastDayOfMonth - today.day + 1;
+      } else if (date.isBefore(DateTime(today.year, today.month, 1))) {
+        remainingDays = 0; // Past month
+      } else {
+        remainingDays = lastDayOfMonth; // Future month
+      }
       
       if (remainingDays <= 0) return 0.0;
       final allowance = makanHarian.remaining / remainingDays;

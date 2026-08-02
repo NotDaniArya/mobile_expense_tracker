@@ -158,11 +158,12 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
             }
 
             // Flat list of categories with positive remaining budget to pick as source
+            // Filter to make sure source category has enough budget to cover reallocation
             final sourceCategories = groups
                 .expand((g) => g.categories)
                 .where((c) =>
                     c.category.id != _selectedCategory?.category.id &&
-                    c.remaining > 0)
+                    c.remaining >= _reallocationAmount)
                 .toList();
 
             return SingleChildScrollView(
@@ -209,7 +210,9 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       },
                       validator: (val) {
                         if (val == null || val.isEmpty) return 'Masukkan jumlah uang';
-                        if (double.tryParse(val) == null) return 'Format tidak valid';
+                        final amount = double.tryParse(val);
+                        if (amount == null) return 'Format tidak valid';
+                        if (amount <= 0) return 'Nominal harus lebih besar dari 0';
                         return null;
                       },
                     ),
@@ -294,41 +297,49 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Pilih kategori budget sumber untuk menutupi kekurangan agar tidak minus:',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<CategoryWithStats>(
-                              value: _sourceCategory,
-                              decoration: InputDecoration(
-                                labelText: 'Kategori Sumber',
-                                filled: true,
-                                fillColor: Theme.of(context).colorScheme.surface,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            if (sourceCategories.isEmpty) ...[
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Peringatan: Tidak ada kategori lain yang memiliki sisa budget cukup untuk menutupi kekurangan ini.',
+                                style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
-                              items: sourceCategories.map((cat) {
-                                return DropdownMenuItem<CategoryWithStats>(
-                                  value: cat,
-                                  child: Text(
-                                    '${cat.category.name} (${currencyFormatter.format(cat.remaining)})',
-                                    style: const TextStyle(fontSize: 13),
+                            ] else ...[
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Pilih kategori budget sumber untuk menutupi kekurangan agar tidak minus:',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<CategoryWithStats>(
+                                value: _sourceCategory,
+                                decoration: InputDecoration(
+                                  labelText: 'Kategori Sumber',
+                                  filled: true,
+                                  fillColor: Theme.of(context).colorScheme.surface,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
                                   ),
-                                );
-                              }).toList(),
-                              onChanged: (cat) {
-                                setState(() {
-                                  _sourceCategory = cat;
-                                });
-                              },
-                              validator: (val) =>
-                                  _needsReallocation && val == null ? 'Pilih kategori sumber' : null,
-                            ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                                items: sourceCategories.map((cat) {
+                                  return DropdownMenuItem<CategoryWithStats>(
+                                    value: cat,
+                                    child: Text(
+                                      '${cat.category.name} (${currencyFormatter.format(cat.remaining)})',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (cat) {
+                                  setState(() {
+                                    _sourceCategory = cat;
+                                  });
+                                },
+                                validator: (val) =>
+                                    _needsReallocation && val == null ? 'Pilih kategori sumber' : null,
+                              ),
+                            ],
                           ],
                         ),
                       ),
