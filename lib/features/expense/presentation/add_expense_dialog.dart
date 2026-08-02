@@ -5,12 +5,14 @@ import '../../budget_group/data/budget_repository.dart';
 import '../../budget_group/domain/budget_models.dart';
 import '../data/expense_repository.dart';
 import '../../dashboard/presentation/dashboard_providers.dart';
+import '../../../core/database/database.dart';
 
 class AddExpenseDialog extends ConsumerStatefulWidget {
   final double? initialAmount;
   final String? initialNotes;
   final int? initialCategoryId;
   final DateTime? initialDate;
+  final Expense? expenseToEdit;
 
   const AddExpenseDialog({
     super.key,
@@ -18,6 +20,7 @@ class AddExpenseDialog extends ConsumerStatefulWidget {
     this.initialNotes,
     this.initialCategoryId,
     this.initialDate,
+    this.expenseToEdit,
   });
 
   @override
@@ -40,13 +43,22 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   @override
   void initState() {
     super.initState();
-    _amountController = TextEditingController(
-      text: widget.initialAmount != null ? widget.initialAmount!.toInt().toString() : '',
-    );
-    _notesController = TextEditingController(text: widget.initialNotes ?? '');
-    _locationController = TextEditingController();
-    if (widget.initialDate != null) {
-      _selectedDate = widget.initialDate!;
+    if (widget.expenseToEdit != null) {
+      _amountController = TextEditingController(
+        text: widget.expenseToEdit!.amount.toInt().toString(),
+      );
+      _notesController = TextEditingController(text: widget.expenseToEdit!.notes ?? '');
+      _locationController = TextEditingController(text: widget.expenseToEdit!.location ?? '');
+      _selectedDate = widget.expenseToEdit!.date;
+    } else {
+      _amountController = TextEditingController(
+        text: widget.initialAmount != null ? widget.initialAmount!.toInt().toString() : '',
+      );
+      _notesController = TextEditingController(text: widget.initialNotes ?? '');
+      _locationController = TextEditingController();
+      if (widget.initialDate != null) {
+        _selectedDate = widget.initialDate!;
+      }
     }
   }
 
@@ -77,9 +89,14 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
 
     setState(() {
       _selectedCategory = stat;
-      if (amount > stat.remaining) {
+      double effectiveRemaining = stat.remaining;
+      if (widget.expenseToEdit != null && widget.expenseToEdit!.categoryId == stat.category.id) {
+        effectiveRemaining += widget.expenseToEdit!.amount;
+      }
+
+      if (amount > effectiveRemaining) {
         _needsReallocation = true;
-        _reallocationAmount = amount - stat.remaining;
+        _reallocationAmount = amount - effectiveRemaining;
       } else {
         _needsReallocation = false;
         _reallocationAmount = 0.0;
@@ -141,17 +158,20 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('Error: $err')),
           data: (groups) {
-            // Pre-select category if matching initialCategoryId
-            if (_selectedCategory == null && widget.initialCategoryId != null) {
-              for (var group in groups) {
-                for (var cat in group.categories) {
-                  if (cat.category.id == widget.initialCategoryId) {
-                    _selectedCategory = cat;
-                    final amt = double.tryParse(_amountController.text) ?? 0.0;
-                    if (amt > 0) {
-                      _checkOverbudget(amt, groups);
+            // Pre-select category if matching initialCategoryId or editing
+            if (_selectedCategory == null) {
+              final targetCatId = widget.expenseToEdit?.categoryId ?? widget.initialCategoryId;
+              if (targetCatId != null) {
+                for (var group in groups) {
+                  for (var cat in group.categories) {
+                    if (cat.category.id == targetCatId) {
+                      _selectedCategory = cat;
+                      final amt = double.tryParse(_amountController.text) ?? 0.0;
+                      if (amt > 0) {
+                        _checkOverbudget(amt, groups);
+                      }
+                      break;
                     }
-                    break;
                   }
                 }
               }
@@ -177,7 +197,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Catat Pengeluaran',
+                          widget.expenseToEdit != null ? 'Ubah Pengeluaran' : 'Catat Pengeluaran',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -423,32 +443,50 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                           final notes = _notesController.text;
                           final location = _locationController.text;
 
-                          // Execute Reallocation first if required
+                          int expenseId;
+                          if (widget.expenseToEdit != null) {
+                            expenseId = widget.expenseToEdit!.id;
+                            // Clean up old reallocation budget transfer for this expense first
+                            await ref.read(budgetRepositoryProvider).deleteBudgetTransfersForExpense(expenseId);
+
+                            await ref.read(expenseRepositoryProvider).updateExpense(
+                              id: expenseId,
+                              categoryId: _selectedCategory!.category.id,
+                              amount: amount,
+                              date: _selectedDate,
+                              notes: notes.isNotEmpty ? notes : null,
+                              location: location.isNotEmpty ? location : null,
+                            );
+                          } else {
+                            expenseId = await ref.read(expenseRepositoryProvider).addExpense(
+                              categoryId: _selectedCategory!.category.id,
+                              amount: amount,
+                              date: _selectedDate,
+                              notes: notes.isNotEmpty ? notes : null,
+                              location: location.isNotEmpty ? location : null,
+                            );
+                          }
+
+                          // Execute Reallocation if required
                           if (_needsReallocation && _sourceCategory != null) {
                             await ref.read(budgetRepositoryProvider).addBudgetTransfer(
                               sourceCategoryId: _sourceCategory!.category.id,
                               targetCategoryId: _selectedCategory!.category.id,
                               amount: _reallocationAmount,
                               date: _selectedDate,
-                              reason: 'Cover Overbudget: $notes',
+                              reason: 'Cover Overbudget [ExpID: $expenseId]: $notes',
                             );
                           }
-
-                          await ref.read(expenseRepositoryProvider).addExpense(
-                            categoryId: _selectedCategory!.category.id,
-                            amount: amount,
-                            date: _selectedDate,
-                            notes: notes.isNotEmpty ? notes : null,
-                            location: location.isNotEmpty ? location : null,
-                          );
 
                           if (context.mounted) {
                             Navigator.of(context).pop();
                           }
                         }
                       },
-                      child: const Text('Simpan Pengeluaran',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        widget.expenseToEdit != null ? 'Simpan Perubahan' : 'Simpan Pengeluaran',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),

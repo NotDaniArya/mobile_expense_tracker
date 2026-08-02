@@ -87,5 +87,44 @@ void main() {
       final found = expenses.where((e) => e.notes == 'End of year late transaction').isNotEmpty;
       expect(found, true);
     });
+
+    test('5. Edit Expense Update Functionality Test', () async {
+      final now = DateTime.now();
+      final id = await expenseRepo.addExpense(
+        categoryId: 6,
+        amount: 20000,
+        date: now,
+        notes: 'Original notes',
+      );
+
+      final updated = await expenseRepo.updateExpense(
+        id: id,
+        categoryId: 6,
+        amount: 35000,
+        date: now,
+        notes: 'Updated notes',
+      );
+
+      expect(updated, true);
+      final expenses = await expenseRepo.watchExpensesForMonth(now).first;
+      expect(expenses.first.amount, 35000);
+      expect(expenses.first.notes, 'Updated notes');
+    });
+
+    test('6. Delete Expense Functionality Test', () async {
+      final now = DateTime.now();
+      final id = await expenseRepo.addExpense(
+        categoryId: 6,
+        amount: 12000,
+        date: now,
+        notes: 'To be deleted',
+      );
+
+      await expenseRepo.deleteExpense(id);
+
+      final expenses = await expenseRepo.watchExpensesForMonth(now).first;
+      final exists = expenses.any((e) => e.notes == 'To be deleted');
+      expect(exists, false);
+    });
   });
 }

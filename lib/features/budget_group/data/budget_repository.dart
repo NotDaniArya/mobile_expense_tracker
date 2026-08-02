@@ -52,4 +52,8 @@ class BudgetRepository {
           ..where((t) => t.id.equals(categoryId)))
         .write(CategoriesCompanion(targetBudget: Value(newBudget)));
   }
+
+  Future<void> deleteBudgetTransfersForExpense(int expenseId) {
+    return (_db.delete(_db.budgetTransfers)..where((t) => t.reason.like('%[ExpID: $expenseId]%'))).go();
+  }
 }
