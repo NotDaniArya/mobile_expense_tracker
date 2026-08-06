@@ -56,4 +56,54 @@ class BudgetRepository {
   Future<void> deleteBudgetTransfersForExpense(int expenseId) {
     return (_db.delete(_db.budgetTransfers)..where((t) => t.reason.like('%[ExpID: $expenseId]%'))).go();
   }
+
+  Future<int> addCategoryGroup(String name) {
+    return _db.into(_db.categoryGroups).insert(
+          CategoryGroupsCompanion.insert(name: name),
+        );
+  }
+
+  Future<void> updateCategoryGroup(int id, String name) {
+    return (_db.update(_db.categoryGroups)..where((t) => t.id.equals(id)))
+        .write(CategoryGroupsCompanion(name: Value(name)));
+  }
+
+  Future<void> deleteCategoryGroup(int id) async {
+    final cats = await (_db.select(_db.categories)..where((t) => t.groupId.equals(id))).get();
+    for (var cat in cats) {
+      await deleteCategory(cat.id);
+    }
+    await (_db.delete(_db.categoryGroups)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<int> addCategory({
+    required int groupId,
+    required String name,
+    required double targetBudget,
+  }) {
+    return _db.into(_db.categories).insert(
+          CategoriesCompanion.insert(
+            groupId: groupId,
+            name: name,
+            targetBudget: targetBudget,
+          ),
+        );
+  }
+
+  Future<void> updateCategory(int id, String name, double targetBudget) {
+    return (_db.update(_db.categories)..where((t) => t.id.equals(id))).write(
+      CategoriesCompanion(
+        name: Value(name),
+        targetBudget: Value(targetBudget),
+      ),
+    );
+  }
+
+  Future<void> deleteCategory(int id) async {
+    await (_db.delete(_db.budgetTransfers)
+          ..where((t) => t.sourceCategoryId.equals(id) | t.targetCategoryId.equals(id)))
+        .go();
+    await (_db.delete(_db.expenses)..where((t) => t.categoryId.equals(id))).go();
+    await (_db.delete(_db.categories)..where((t) => t.id.equals(id))).go();
+  }
 }

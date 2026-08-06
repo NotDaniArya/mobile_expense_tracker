@@ -5,13 +5,21 @@ import 'package:intl/intl.dart';
 import 'dashboard_providers.dart';
 import '../../expense/data/expense_repository.dart';
 import '../../../core/database/database.dart';
+import 'edit_budget_dialog.dart';
 import 'quick_presets_dialogs.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _isBalanceVisible = true;
+
+  @override
+  Widget build(BuildContext context) {
     final selectedMonth = ref.watch(selectedMonthProvider);
     final statsAsync = ref.watch(budgetGroupsWithStatsProvider(selectedMonth));
     final presetsAsync = ref.watch(quickPresetsProvider);
@@ -98,16 +106,49 @@ class DashboardScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'TOTAL ANGGARAN',
-                          style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                        Row(
+                          children: [
+                            const Text(
+                              'TOTAL ANGGARAN',
+                              style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isBalanceVisible = !_isBalanceVisible;
+                                });
+                              },
+                              child: Icon(
+                                _isBalanceVisible ? Icons.visibility : Icons.visibility_off,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () {
+                                showEditBudgetDialog(context, ref, selectedMonth);
+                              },
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.edit, color: Colors.white70, size: 14),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Edit Anggaran',
+                                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 4),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            currencyFormatter.format(totalBudget),
+                            _isBalanceVisible ? currencyFormatter.format(totalBudget) : 'Rp ••••••••',
                             style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -124,7 +165,7 @@ class DashboardScreen extends ConsumerWidget {
                                     fit: BoxFit.scaleDown,
                                     alignment: Alignment.centerLeft,
                                     child: Text(
-                                      currencyFormatter.format(totalSpent),
+                                      _isBalanceVisible ? currencyFormatter.format(totalSpent) : 'Rp ••••••••',
                                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                     ),
                                   ),
@@ -141,7 +182,7 @@ class DashboardScreen extends ConsumerWidget {
                                     fit: BoxFit.scaleDown,
                                     alignment: Alignment.centerRight,
                                     child: Text(
-                                      currencyFormatter.format(totalRemaining),
+                                      _isBalanceVisible ? currencyFormatter.format(totalRemaining) : 'Rp ••••••••',
                                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                                     ),
                                   ),
