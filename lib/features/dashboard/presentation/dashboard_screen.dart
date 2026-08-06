@@ -127,7 +127,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             const Spacer(),
                             GestureDetector(
                               onTap: () {
-                                showEditBudgetDialog(context, ref, groups);
+                                showEditBudgetDialog(context, ref, selectedMonth);
                               },
                               child: const Row(
                                 children: [
