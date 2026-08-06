@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dashboard_screen.dart';
 import 'history_screen.dart';
-import '../../expense/presentation/add_expense_dialog.dart';
 import '../../receipt_scan/presentation/scanner_screen.dart';
-import '../../ai_advisor/presentation/ai_advisor_screen.dart';
 
 class MainNavigationShell extends ConsumerStatefulWidget {
   const MainNavigationShell({super.key});
@@ -19,7 +17,6 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const HistoryScreen(),
-    const AiAdvisorScreen(),
   ];
 
   @override
@@ -29,7 +26,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex == 3 ? 2 : _currentIndex,
+        index: _currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: BottomAppBar(
@@ -64,7 +61,24 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 ),
               ),
             ),
-            // Tab 2: Riwayat
+            // Tab 2: Center Placeholder for Scan Struk FAB
+            const Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  SizedBox(height: 38), // Push the text down to clear the FAB
+                  Text(
+                    'Scan Struk',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: inactiveColor,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                ],
+              ),
+            ),
+            // Tab 3: Riwayat
             Expanded(
               child: InkWell(
                 onTap: () => setState(() => _currentIndex = 1),
@@ -82,75 +96,6 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                         fontSize: 11,
                         fontWeight: _currentIndex == 1 ? FontWeight.bold : FontWeight.normal,
                         color: _currentIndex == 1 ? activeColor : inactiveColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Tab 3: Center Placeholder for Scan Struk FAB
-            const Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SizedBox(height: 38), // Push the text down to clear the FAB
-                  Text(
-                    'Scan Struk',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: inactiveColor,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                ],
-              ),
-            ),
-            // Tab 4: Advisor
-            Expanded(
-              child: InkWell(
-                onTap: () => setState(() => _currentIndex = 3),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _currentIndex == 3 ? Icons.psychology : Icons.psychology_outlined,
-                      color: _currentIndex == 3 ? activeColor : inactiveColor,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Advisor',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: _currentIndex == 3 ? FontWeight.bold : FontWeight.normal,
-                        color: _currentIndex == 3 ? activeColor : inactiveColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Tab 5: Tambah
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const AddExpenseDialog(),
-                  );
-                },
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add_box_outlined,
-                      color: inactiveColor,
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Tambah',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: inactiveColor,
                       ),
                     ),
                   ],

@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'dashboard_providers.dart';
 import '../../expense/data/expense_repository.dart';
+import '../../expense/presentation/add_expense_dialog.dart';
 import '../../../core/database/database.dart';
 import 'edit_budget_dialog.dart';
 import 'quick_presets_dialogs.dart';
@@ -126,6 +127,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                             ),
                             const Spacer(),
+                            GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => const AddExpenseDialog(),
+                                );
+                              },
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.add, color: Colors.white70, size: 14),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Tambah',
+                                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
                             GestureDetector(
                               onTap: () {
                                 showEditBudgetDialog(context, ref, selectedMonth);
