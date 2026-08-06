@@ -4,8 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'dashboard_providers.dart';
 import '../../expense/data/expense_repository.dart';
-import '../../receipt_scan/presentation/scanner_screen.dart';
-import '../../ai_advisor/presentation/ai_advisor_screen.dart';
 import '../../../core/database/database.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -53,68 +51,6 @@ class DashboardScreen extends ConsumerWidget {
                         ref.read(selectedMonthProvider.notifier).state = 
                             DateTime(selectedMonth.year, selectedMonth.month + 1);
                       },
-                    ),
-                  ],
-                ),
-              ),
-
-              // QUICK ACTIONS ROW (SCAN & ADVISOR)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => const ScannerScreen()),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardTheme.color,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.qr_code_scanner, color: Theme.of(context).colorScheme.primary, size: 20),
-                              const SizedBox(width: 8),
-                              const Text('Scan Struk', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => const AiAdvisorScreen()),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardTheme.color,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.psychology, color: Theme.of(context).colorScheme.secondary, size: 20),
-                              const SizedBox(width: 8),
-                              const Text('AI Advisor', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                            ],
-                          ),
-                        ),
-                      ),
                     ),
                   ],
                 ),

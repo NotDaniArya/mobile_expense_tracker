@@ -158,6 +158,35 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('Error: $err')),
           data: (groups) {
+            // Synchronize _selectedCategory and _sourceCategory references with the fresh groups data
+            if (_selectedCategory != null) {
+              CategoryWithStats? found;
+              for (var group in groups) {
+                for (var cat in group.categories) {
+                  if (cat.category.id == _selectedCategory!.category.id) {
+                    found = cat;
+                    break;
+                  }
+                }
+                if (found != null) break;
+              }
+              _selectedCategory = found;
+            }
+
+            if (_sourceCategory != null) {
+              CategoryWithStats? found;
+              for (var group in groups) {
+                for (var cat in group.categories) {
+                  if (cat.category.id == _sourceCategory!.category.id) {
+                    found = cat;
+                    break;
+                  }
+                }
+                if (found != null) break;
+              }
+              _sourceCategory = found;
+            }
+
             // Pre-select category if matching initialCategoryId or editing
             if (_selectedCategory == null) {
               final targetCatId = widget.expenseToEdit?.categoryId ?? widget.initialCategoryId;
