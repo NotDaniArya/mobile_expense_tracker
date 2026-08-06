@@ -31,6 +31,13 @@ class _AiAdvisorScreenState extends ConsumerState<AiAdvisorScreen> {
 
     try {
       final selectedMonth = ref.read(selectedMonthProvider);
+
+      // Wait for underlying StreamProviders to emit data so the stats are ready
+      await ref.read(categoryGroupsProvider.future);
+      await ref.read(categoriesProvider.future);
+      await ref.read(expensesForMonthProvider(selectedMonth).future);
+      await ref.read(transfersForMonthProvider(selectedMonth).future);
+
       final statsAsync = ref.read(budgetGroupsWithStatsProvider(selectedMonth));
       final transfersAsync = ref.read(transfersForMonthProvider(selectedMonth));
 
@@ -76,7 +83,8 @@ class _AiAdvisorScreenState extends ConsumerState<AiAdvisorScreen> {
         _adviceMarkdown = response.text ?? 'Gagal menghasilkan saran keuangan.';
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('Error loading AI advice: $e\n$stack');
       setState(() {
         _errorMessage = 'Gagal memuat saran keuangan. Pastikan koneksi internet Anda aktif dan API Key valid.';
         _isLoading = false;
