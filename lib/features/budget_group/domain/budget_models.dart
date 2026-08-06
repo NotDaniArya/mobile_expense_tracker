@@ -16,6 +16,15 @@ class CategoryWithStats {
     required this.remaining,
     required this.status,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is CategoryWithStats && other.category.id == category.id;
+  }
+
+  @override
+  int get hashCode => category.id.hashCode;
 }
 
 class CategoryGroupWithStats {
