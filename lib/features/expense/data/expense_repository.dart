@@ -87,4 +87,19 @@ class ExpenseRepository {
   Future<void> deleteQuickPreset(int id) {
     return (_db.delete(_db.quickPresets)..where((t) => t.id.equals(id))).go();
   }
+
+  Future<void> updateQuickPreset({
+    required int id,
+    required int categoryId,
+    required String name,
+    required double amount,
+  }) {
+    return (_db.update(_db.quickPresets)..where((t) => t.id.equals(id))).write(
+      QuickPresetsCompanion(
+        categoryId: Value(categoryId),
+        name: Value(name),
+        amount: Value(amount),
+      ),
+    );
+  }
 }

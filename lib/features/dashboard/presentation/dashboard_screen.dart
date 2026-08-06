@@ -6,6 +6,7 @@ import 'dashboard_providers.dart';
 import '../../expense/data/expense_repository.dart';
 import '../../../core/database/database.dart';
 import 'edit_budget_dialog.dart';
+import 'quick_presets_dialogs.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -261,15 +262,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 loading: () => const SizedBox(),
                 error: (err, stack) => const SizedBox(),
                 data: (presets) {
-                  if (presets.isEmpty) return const SizedBox();
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                        child: Text(
-                          'PENCATATAN CEPAT (ONE-TAP LOG)',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'PENCATATAN CEPAT (ONE-TAP LOG)',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.settings, size: 16, color: Colors.grey),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                showManagePresetsDialog(context, ref, presets);
+                              },
+                            ),
+                          ],
                         ),
                       ),
                       SizedBox(
@@ -277,43 +290,68 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           scrollDirection: Axis.horizontal,
-                          itemCount: presets.length,
+                          itemCount: presets.length + 1,
                           itemBuilder: (context, index) {
-                            final preset = presets[index];
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 6),
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.surface,
-                                  foregroundColor: Theme.of(context).colorScheme.onSurface,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    side: BorderSide(
-                                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                            if (index < presets.length) {
+                              final preset = presets[index];
+                              return Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 6),
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.surface,
+                                    foregroundColor: Theme.of(context).colorScheme.onSurface,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                      side: BorderSide(
+                                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                icon: const Icon(Icons.flash_on, size: 16),
-                                label: Text(preset.name),
-                                onPressed: () async {
-                                  await ref.read(expenseRepositoryProvider).addExpense(
-                                        categoryId: preset.categoryId,
-                                        amount: preset.amount,
-                                        date: DateTime.now(),
-                                        notes: 'Instant preset log: ${preset.name}',
+                                  icon: const Icon(Icons.flash_on, size: 16),
+                                  label: Text(preset.name),
+                                  onLongPress: () {
+                                    showAddEditPresetDialog(context, presetToEdit: preset);
+                                  },
+                                  onPressed: () async {
+                                    await ref.read(expenseRepositoryProvider).addExpense(
+                                          categoryId: preset.categoryId,
+                                          amount: preset.amount,
+                                          date: DateTime.now(),
+                                          notes: 'Instant preset log: ${preset.name}',
+                                        );
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Instant log: ${preset.name} berhasil disimpan!'),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
                                       );
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Instant log: ${preset.name} berhasil disimpan!'),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            );
+                                    }
+                                  },
+                                ),
+                              );
+                            } else {
+                              return Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 6),
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Theme.of(context).colorScheme.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    side: BorderSide(
+                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.add, size: 16),
+                                  label: const Text('Tambah'),
+                                  onPressed: () {
+                                    showAddEditPresetDialog(context);
+                                  },
+                                ),
+                              );
+                            }
                           },
                         ),
                       ),
