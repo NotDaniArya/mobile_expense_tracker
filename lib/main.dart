@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Expense Tracker',
+      title: 'Expense Tracker Arya',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system, // Supports automatic Dark / Light mode based on system settings
       theme: AppTheme.lightTheme,

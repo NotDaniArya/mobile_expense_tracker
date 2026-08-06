@@ -55,6 +55,7 @@ dev_dependencies:
   build_runner: ^2.4.9
   drift_dev: ^2.20.0
   riverpod_generator: ^2.4.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -100,3 +101,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_logo.png"
+  remove_alpha_ios: true
