@@ -231,7 +231,14 @@ class _EditBudgetDialogState extends ConsumerState<_EditBudgetDialog> {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Edit Anggaran Bulanan'),
+              const Expanded(
+                child: Text(
+                  'Edit Anggaran Bulanan',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.create_new_folder, size: 22, color: Colors.blue),
                 tooltip: 'Tambah Kelompok',
@@ -275,31 +282,41 @@ class _EditBudgetDialogState extends ConsumerState<_EditBudgetDialog> {
                               padding: const EdgeInsets.only(top: 16.0, bottom: 6.0),
                               child: Row(
                                 children: [
-                                  Text(
-                                    group.group.name.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).colorScheme.primary,
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            group.group.name.toUpperCase(),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, size: 14),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          color: Colors.grey,
+                                          onPressed: () => _editCategoryGroup(context, ref, group.group),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, size: 14),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          color: Colors.redAccent,
+                                          onPressed: () => _deleteCategoryGroup(context, ref, group.group),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, size: 14),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    color: Colors.grey,
-                                    onPressed: () => _editCategoryGroup(context, ref, group.group),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, size: 14),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    color: Colors.redAccent,
-                                    onPressed: () => _deleteCategoryGroup(context, ref, group.group),
-                                  ),
-                                  const Spacer(),
+                                  const SizedBox(width: 16),
                                   TextButton.icon(
                                     label: const Text('Kategori', style: TextStyle(fontSize: 10)),
                                     icon: const Icon(Icons.add, size: 12),
