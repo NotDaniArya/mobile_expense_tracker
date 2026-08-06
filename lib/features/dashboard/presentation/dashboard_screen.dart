@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_providers.dart';
 import '../../expense/data/expense_repository.dart';
 import '../../expense/presentation/add_expense_dialog.dart';
@@ -18,6 +19,27 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _isBalanceVisible = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBalanceVisibility();
+  }
+
+  Future<void> _loadBalanceVisibility() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isBalanceVisible = prefs.getBool('is_balance_visible') ?? true;
+    });
+  }
+
+  Future<void> _toggleBalanceVisibility() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isBalanceVisible = !_isBalanceVisible;
+      prefs.setBool('is_balance_visible', _isBalanceVisible);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,11 +137,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isBalanceVisible = !_isBalanceVisible;
-                                });
-                              },
+                              onTap: _toggleBalanceVisibility,
                               child: Icon(
                                 _isBalanceVisible ? Icons.visibility : Icons.visibility_off,
                                 color: Colors.white70,
